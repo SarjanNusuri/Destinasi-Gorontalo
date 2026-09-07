@@ -1,0 +1,130 @@
+@import "tailwindcss";
+@import "leaflet/dist/leaflet.css";
+
+@theme {
+    --font-sans:
+        "Instrument Sans", ui-sans-serif, system-ui, sans-serif,
+        "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol",
+        "Noto Color Emoji";
+
+    /* Warna Tema Desa */
+    --color-primary: #1b4332;
+    --color-primary-dark: #1a2e1a;
+    --color-primary-light: #2d6a4f;
+    --color-accent: #c8861a;
+    --color-cream: #f8f6f1;
+    --color-sand: #d4ccbc;
+    --color-sand-light: #ede8df;
+    --color-mint: #d8edd5;
+    --color-forest-muted: #5a6b5a;
+    --color-forest-soft: #a8c5b5;
+
+    /* Gorontalo Landing Theme */
+    --color-goro-dark: #0f1f17;
+    --color-goro-deep: #0a1610;
+    --color-goro-surface: #111e17;
+    --color-goro-card: #1a3326;
+    --color-goro-gold: #d4a853;
+    --color-goro-gold-light: #e8c47a;
+    --color-goro-cream: #f5efe6;
+}
+
+html {
+    @apply scroll-smooth;
+}
+
+.pattern {
+    background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%231B4332' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+}
+
+/* Gorontalo Landing Animations */
+@keyframes fade-up {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes scale-in {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes slide-right {
+    from { opacity: 0; transform: translateX(-20px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-8px); }
+}
+
+@keyframes pulse-gold {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(212, 168, 83, 0.4); }
+    50% { box-shadow: 0 0 0 12px rgba(212, 168, 83, 0); }
+}
+
+.animate-fade-up {
+    animation: fade-up 0.8s ease-out both;
+}
+
+.animate-fade-in {
+    animation: fade-in 0.6s ease-out both;
+}
+
+.animate-scale-in {
+    animation: scale-in 0.6s ease-out both;
+}
+
+.animate-slide-right {
+    animation: slide-right 0.6s ease-out both;
+}
+
+.animate-float {
+    animation: float 3s ease-in-out infinite;
+}
+
+.animate-pulse-gold {
+    animation: pulse-gold 2s ease-in-out infinite;
+}
+
+/* Gradient overlays */
+.gradient-hero {
+    background: linear-gradient(180deg, rgba(15,31,23,0.3) 0%, rgba(15,31,23,0.1) 30%, rgba(15,31,23,0.6) 70%, rgba(15,31,23,0.95) 100%);
+}
+
+.gradient-card {
+    background: linear-gradient(180deg, transparent 30%, rgba(15,31,23,0.85) 100%);
+}
+
+.gradient-card-subtle {
+    background: linear-gradient(180deg, transparent 50%, rgba(15,31,23,0.7) 100%);
+}
+
+/* Leaflet marker reset */
+.custom-marker {
+    background: transparent !important;
+    border: none !important;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+    width: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: #0f1f17;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #1a3326;
+    border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #d4a853;
+}
