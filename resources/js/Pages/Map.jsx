@@ -1,4 +1,4 @@
-import { Head, Link } from "@inertiajs/react";
+import { Head, Link, usePage } from "@inertiajs/react";
 import { useState, useEffect, useRef, useMemo } from "react";
 import {
     ArrowLeft,
@@ -14,7 +14,7 @@ import {
     UtensilsCrossed,
     Mountain,
 } from "lucide-react";
-import { destinations, interests } from "@/data/landing";
+import { interests } from "@/data/landing";
 
 const LUCIDE_MAP = { Trees, Landmark, Waves, ScrollText, UtensilsCrossed, Mountain };
 
@@ -24,6 +24,7 @@ const CATEGORIES = [
 ];
 
 export default function Map() {
+    const { destinations } = usePage().props;
     const mapRef = useRef(null);
     const mapInstance = useRef(null);
     const markersRef = useRef([]);

@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Link } from "@inertiajs/react";
+import { useRef } from "react";
+import { Link, router, usePage } from "@inertiajs/react";
 import {
     MapPin,
     Trees,
@@ -9,8 +9,10 @@ import {
     UtensilsCrossed,
     Mountain,
     Layers,
+    ChevronLeft,
+    ChevronRight,
 } from "lucide-react";
-import { destinations, interests } from "@/data/landing";
+import { interests } from "@/data/landing";
 import { useInView } from "@/hooks/useLanding";
 
 const LUCIDE_MAP = {
@@ -67,20 +69,38 @@ function DestinationCard({ dest, index, isInView }) {
 }
 
 export default function Explore() {
-    const [activeCategory, setActiveCategory] = useState("all");
+    const { destinations, destinationsMeta, activeCategory } = usePage().props;
     const [ref, isInView] = useInView();
+    const sectionRef = useRef(null);
 
-    const filteredDestinations =
-        activeCategory === "all"
-            ? destinations
-            : destinations.filter(
-                  (d) => d.category.toLowerCase() === activeCategory
-              );
+    const handleCategoryChange = (catId) => {
+        router.get('/', { category: catId }, {
+            only: ['destinations', 'destinationsMeta', 'activeCategory'],
+            preserveState: true,
+            onSuccess: () => {
+                setTimeout(() => {
+                    sectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+                }, 100);
+            }
+        });
+    };
+
+    const handlePageChange = (page) => {
+        router.get('/', { category: activeCategory, page }, {
+            only: ['destinations', 'destinationsMeta'],
+            preserveState: true,
+            onSuccess: () => {
+                setTimeout(() => {
+                    sectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+                }, 100);
+            }
+        });
+    };
 
     return (
         <section
             id="explore"
-            ref={ref}
+            ref={(el) => { ref.current = el; sectionRef.current = el; }}
             className="py-24 md:py-32 px-6 md:px-16 max-w-7xl mx-auto"
         >
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-16">
@@ -111,7 +131,7 @@ export default function Explore() {
                     }`}
                     style={{ animationDelay: "200ms" }}
                 >
-                    127 destinasi wisata tersebar dari pesisir Teluk Tomini
+                    {destinationsMeta.total} destinasi wisata tersebar dari pesisir Teluk Tomini
                     hingga pegunungan Bone Bolango.
                 </p>
             </div>
@@ -128,7 +148,7 @@ export default function Explore() {
                     return (
                         <button
                             key={cat.id}
-                            onClick={() => setActiveCategory(cat.id)}
+                            onClick={() => handleCategoryChange(cat.id)}
                             className={`flex items-center gap-2 px-5 py-2.5 rounded-full border transition-all text-sm font-medium ${
                                 isInView ? "animate-fade-up" : "opacity-0"
                             } ${
@@ -146,8 +166,8 @@ export default function Explore() {
             </div>
 
             {/* Destination grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-                {filteredDestinations.map((dest, i) => (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                {destinations.map((dest, i) => (
                     <DestinationCard
                         key={dest.id}
                         dest={dest}
@@ -157,9 +177,42 @@ export default function Explore() {
                 ))}
             </div>
 
-            {filteredDestinations.length === 0 && (
+            {destinations.length === 0 && (
                 <div className="py-20 text-center text-goro-cream/30 font-light font-display text-2xl italic">
                     Tidak ada destinasi untuk kategori ini.
+                </div>
+            )}
+
+            {/* Pagination */}
+            {destinationsMeta.last_page > 1 && (
+                <div className="flex items-center justify-center gap-2 mt-12">
+                    <button
+                        onClick={() => handlePageChange(destinationsMeta.current_page - 1)}
+                        disabled={destinationsMeta.current_page <= 1}
+                        className="w-10 h-10 rounded-full border border-white/10 flex items-center justify-center text-goro-cream/50 hover:border-goro-gold/40 hover:text-goro-gold transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                    >
+                        <ChevronLeft className="w-4 h-4" />
+                    </button>
+                    {Array.from({ length: destinationsMeta.last_page }, (_, i) => i + 1).map((page) => (
+                        <button
+                            key={page}
+                            onClick={() => handlePageChange(page)}
+                            className={`w-10 h-10 rounded-full border flex items-center justify-center text-sm font-mono transition-all ${
+                                page === destinationsMeta.current_page
+                                    ? "bg-goro-gold border-goro-gold text-goro-dark font-semibold"
+                                    : "border-white/10 text-goro-cream/50 hover:border-goro-gold/40 hover:text-goro-gold"
+                            }`}
+                        >
+                            {page}
+                        </button>
+                    ))}
+                    <button
+                        onClick={() => handlePageChange(destinationsMeta.current_page + 1)}
+                        disabled={destinationsMeta.current_page >= destinationsMeta.last_page}
+                        className="w-10 h-10 rounded-full border border-white/10 flex items-center justify-center text-goro-cream/50 hover:border-goro-gold/40 hover:text-goro-gold transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                    >
+                        <ChevronRight className="w-4 h-4" />
+                    </button>
                 </div>
             )}
         </section>

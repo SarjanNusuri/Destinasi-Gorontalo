@@ -1,5 +1,5 @@
 import { useRef, useEffect, useState, useMemo, useCallback } from "react";
-import { Head, Link } from "@inertiajs/react";
+import { Head, Link, usePage } from "@inertiajs/react";
 import {
     ArrowLeft,
     MapPin,
@@ -12,12 +12,24 @@ import {
     ChevronDown,
     BedDouble,
 } from "lucide-react";
-import { destinations } from "@/data/landing";
 import { useThreeViewer } from "@/hooks/useThreeViewer";
 import LandingNavbar from "@/components/landing/LandingNavbar";
 import Footer from "@/components/landing/Footer";
 
 /* ─── Helpers ─── */
+function haversineDistance(lat1, lng1, lat2, lng2) {
+    const R = 6371;
+    const dLat = ((lat2 - lat1) * Math.PI) / 180;
+    const dLng = ((lng2 - lng1) * Math.PI) / 180;
+    const a =
+        Math.sin(dLat / 2) ** 2 +
+        Math.cos((lat1 * Math.PI) / 180) *
+            Math.cos((lat2 * Math.PI) / 180) *
+            Math.sin(dLng / 2) ** 2;
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+}
+
 const TURN_ICONS = {
     right: "→",
     left: "←",
@@ -193,9 +205,13 @@ function FloatingNavPopup({ hotel, onClose, onRouteToHotel }) {
                 {/* Header */}
                 <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
                     <div className="flex items-center gap-3 min-w-0">
-                        <div className="w-8 h-8 rounded-lg bg-goro-gold/20 flex items-center justify-center shrink-0">
-                            <BedDouble className="w-4 h-4 text-goro-gold" />
-                        </div>
+                        {hotel.image ? (
+                            <img src={hotel.image} alt={hotel.name} className="w-10 h-10 rounded-lg object-cover shrink-0" />
+                        ) : (
+                            <div className="w-10 h-10 rounded-lg bg-goro-gold/20 flex items-center justify-center shrink-0">
+                                <BedDouble className="w-5 h-5 text-goro-gold" />
+                            </div>
+                        )}
                         <div className="min-w-0">
                             <p className="text-sm font-medium text-goro-cream truncate">
                                 {hotel.name}
@@ -335,72 +351,107 @@ function FloatingNavPopup({ hotel, onClose, onRouteToHotel }) {
 function HotelCard({ hotel, onSelect, isActive }) {
     return (
         <div
-            className={`relative p-5 rounded-2xl border transition-all cursor-pointer ${
+            className={`relative overflow-hidden rounded-2xl border transition-all cursor-pointer ${
                 isActive
                     ? "bg-goro-card border-goro-gold/40 shadow-lg shadow-goro-gold/5"
                     : "bg-goro-card/50 border-white/5 hover:border-goro-gold/20 hover:bg-goro-card/80"
             }`}
             onClick={() => onSelect(hotel)}
         >
-            <div className="flex items-start justify-between gap-3 mb-3">
-                <div className="flex items-center gap-3">
-                    <div
-                        className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
-                            isActive ? "bg-goro-gold/20" : "bg-white/5"
+            {hotel.image && (
+                <div className="relative h-36 overflow-hidden">
+                    <img
+                        src={hotel.image}
+                        alt={hotel.name}
+                        className="w-full h-full object-cover transition-transform duration-700 hover:scale-110"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                    <div className="absolute bottom-3 left-4 right-4 flex items-end justify-between">
+                        <div>
+                            <h4 className="font-display text-base text-white font-medium leading-tight">
+                                {hotel.name}
+                            </h4>
+                            <span className="text-[0.6rem] font-mono tracking-wider text-goro-gold uppercase">
+                                {hotel.type}
+                            </span>
+                        </div>
+                        <div className="text-right shrink-0">
+                            <p className="text-sm font-semibold text-goro-gold">
+                                {hotel.price}
+                            </p>
+                            <div className="flex items-center gap-1 justify-end mt-0.5">
+                                <Star className="w-3 h-3 text-goro-gold fill-goro-gold" />
+                                <span className="text-xs text-white/70">
+                                    {hotel.rating}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+            <div className="p-5">
+                {!hotel.image && (
+                    <div className="flex items-center justify-between gap-3 mb-3">
+                        <div className="flex items-center gap-3">
+                            <div
+                                className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
+                                    isActive ? "bg-goro-gold/20" : "bg-white/5"
+                                }`}
+                            >
+                                <BedDouble
+                                    className={`w-5 h-5 ${
+                                        isActive
+                                            ? "text-goro-gold"
+                                            : "text-goro-cream/40"
+                                    }`}
+                                />
+                            </div>
+                            <div>
+                                <h4 className="font-display text-base text-goro-cream font-medium">
+                                    {hotel.name}
+                                </h4>
+                                <span className="text-[0.6rem] font-mono tracking-wider text-goro-gold uppercase">
+                                    {hotel.type}
+                                </span>
+                            </div>
+                        </div>
+                        <div className="text-right shrink-0">
+                            <p className="text-sm font-semibold text-goro-gold">
+                                {hotel.price}
+                            </p>
+                            <div className="flex items-center gap-1 justify-end mt-0.5">
+                                <Star className="w-3 h-3 text-goro-gold" />
+                                <span className="text-xs text-goro-cream/50">
+                                    {hotel.rating}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                )}
+                <p className="text-sm text-goro-cream/50 font-light leading-relaxed mb-4 line-clamp-2">
+                    {hotel.description}
+                </p>
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4 text-xs text-goro-cream/40">
+                        <span className="flex items-center gap-1">
+                            <MapPin className="w-3 h-3 text-goro-gold/60" />
+                            {hotel.distance} km
+                        </span>
+                        <span className="flex items-center gap-1">
+                            <Clock className="w-3 h-3 text-goro-gold/60" />±
+                            {hotel.duration} menit
+                        </span>
+                    </div>
+                    <span
+                        className={`text-xs font-semibold px-3 py-1.5 rounded-lg transition-all ${
+                            isActive
+                                ? "bg-goro-gold text-goro-dark"
+                                : "bg-goro-gold/10 text-goro-gold"
                         }`}
                     >
-                        <BedDouble
-                            className={`w-5 h-5 ${
-                                isActive
-                                    ? "text-goro-gold"
-                                    : "text-goro-cream/40"
-                            }`}
-                        />
-                    </div>
-                    <div>
-                        <h4 className="font-display text-base text-goro-cream font-medium">
-                            {hotel.name}
-                        </h4>
-                        <span className="text-[0.6rem] font-mono tracking-wider text-goro-gold uppercase">
-                            {hotel.type}
-                        </span>
-                    </div>
-                </div>
-                <div className="text-right shrink-0">
-                    <p className="text-sm font-semibold text-goro-gold">
-                        {hotel.price}
-                    </p>
-                    <div className="flex items-center gap-1 justify-end mt-0.5">
-                        <Star className="w-3 h-3 text-goro-gold" />
-                        <span className="text-xs text-goro-cream/50">
-                            {hotel.rating}
-                        </span>
-                    </div>
-                </div>
-            </div>
-            <p className="text-sm text-goro-cream/50 font-light leading-relaxed mb-4 line-clamp-2">
-                {hotel.description}
-            </p>
-            <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4 text-xs text-goro-cream/40">
-                    <span className="flex items-center gap-1">
-                        <MapPin className="w-3 h-3 text-goro-gold/60" />
-                        {hotel.distance} km
-                    </span>
-                    <span className="flex items-center gap-1">
-                        <Clock className="w-3 h-3 text-goro-gold/60" />±
-                        {hotel.duration} menit
+                        {isActive ? "Navigasi aktif" : "Kunjungi →"}
                     </span>
                 </div>
-                <span
-                    className={`text-xs font-semibold px-3 py-1.5 rounded-lg transition-all ${
-                        isActive
-                            ? "bg-goro-gold text-goro-dark"
-                            : "bg-goro-gold/10 text-goro-gold"
-                    }`}
-                >
-                    {isActive ? "Navigasi aktif" : "Kunjungi →"}
-                </span>
             </div>
         </div>
     );
@@ -775,15 +826,31 @@ function Viewer3D({ sceneConfig, name }) {
 /* ═══════════════════════════════════════════════════════════════════
    MAIN PAGE
    ═══════════════════════════════════════════════════════════════════ */
-export default function DestinationDetail({ destinationId }) {
-    const dest = useMemo(
-        () => destinations.find((d) => d.id === Number(destinationId)),
-        [destinationId]
-    );
+export default function DestinationDetail() {
+    const { destination: dest } = usePage().props;
 
     const [activeHotel, setActiveHotel] = useState(null);
     const [popupHotel, setPopupHotel] = useState(null);
     const [hotelRouteGeometry, setHotelRouteGeometry] = useState(null);
+    const [liveDistance, setLiveDistance] = useState(null);
+
+    useEffect(() => {
+        if (!navigator.geolocation) return;
+        const watchId = navigator.geolocation.watchPosition(
+            (pos) => {
+                const dist = haversineDistance(
+                    pos.coords.latitude,
+                    pos.coords.longitude,
+                    dest.lat,
+                    dest.lng
+                );
+                setLiveDistance(dist < 1 ? `${Math.round(dist * 1000)} m` : `${dist.toFixed(1)} km`);
+            },
+            () => {},
+            { enableHighAccuracy: true, timeout: 15000 }
+        );
+        return () => navigator.geolocation.clearWatch(watchId);
+    }, [dest.lat, dest.lng]);
 
     const handleHotelSelect = useCallback((hotel) => {
         setActiveHotel(hotel);
@@ -841,7 +908,7 @@ export default function DestinationDetail({ destinationId }) {
                     <div className="absolute inset-0 bg-goro-dark/30" />
                     <div className="relative z-10 h-full flex flex-col justify-end pb-12 px-6 md:px-16 max-w-6xl mx-auto">
                         <Link
-                            href="/"
+                            href="/#explore"
                             className="inline-flex items-center gap-2 text-goro-cream/60 hover:text-goro-gold transition-colors mb-6 w-fit font-mono text-xs tracking-wider"
                         >
                             <ArrowLeft className="w-4 h-4" /> Kembali
@@ -872,7 +939,7 @@ export default function DestinationDetail({ destinationId }) {
                 {/* Content */}
                 <section className="max-w-6xl mx-auto px-6 md:px-16 py-16">
                     {/* 3D Viewer */}
-                    <div className="mb-16">
+                    <div id="diorama" className="mb-16 scroll-mt-24">
                         <div className="flex items-center gap-3 mb-6">
                             <div className="w-1.5 h-1.5 rounded-full bg-goro-gold" />
                             <h2 className="font-display text-2xl font-light">
@@ -890,7 +957,7 @@ export default function DestinationDetail({ destinationId }) {
                     </div>
 
                     {/* Description + Details */}
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 mb-16">
+                    <div id="tentang" className="grid grid-cols-1 lg:grid-cols-3 gap-12 mb-16 scroll-mt-24">
                         <div className="lg:col-span-2">
                             <div className="flex items-center gap-3 mb-6">
                                 <div className="w-1.5 h-1.5 rounded-full bg-goro-gold" />
@@ -935,7 +1002,11 @@ export default function DestinationDetail({ destinationId }) {
                                         label: "Durasi Kunjungan",
                                         value: dest.details.duration,
                                     },
-                                    { label: "Jarak", value: dest.distance },
+                                    { label: "Jarak dari Pusat Kota", value: dest.distance },
+                                    {
+                                        label: "Jarak dari Lokasi Anda",
+                                        value: liveDistance || "Menghitung...",
+                                    },
                                     {
                                         label: "Rating",
                                         value: (
@@ -972,7 +1043,7 @@ export default function DestinationDetail({ destinationId }) {
                     </div>
 
                     {/* Leaflet Map */}
-                    <div className="mb-16">
+                    <div id="peta" className="mb-16 scroll-mt-24">
                         <div className="flex items-center gap-3 mb-6">
                             <div className="w-1.5 h-1.5 rounded-full bg-goro-gold" />
                             <h2 className="font-display text-2xl font-light">
@@ -995,7 +1066,7 @@ export default function DestinationDetail({ destinationId }) {
                     </div>
 
                     {/* Hotel Recommendations */}
-                    <div>
+                    <div id="penginapan" className="scroll-mt-24">
                         <div className="flex items-center gap-3 mb-2">
                             <div className="w-1.5 h-1.5 rounded-full bg-goro-gold" />
                             <h2 className="font-display text-2xl font-light">
@@ -1016,17 +1087,6 @@ export default function DestinationDetail({ destinationId }) {
                                 />
                             ))}
                         </div>
-                    </div>
-
-                    {/* Back link */}
-                    <div className="mt-16 pt-12 border-t border-goro-card">
-                        <Link
-                            href="/"
-                            className="inline-flex items-center gap-2 text-goro-cream/50 hover:text-goro-gold transition-colors font-mono text-xs tracking-wider"
-                        >
-                            <ArrowLeft className="w-4 h-4" /> Kembali ke Semua
-                            Destinasi
-                        </Link>
                     </div>
                 </section>
 

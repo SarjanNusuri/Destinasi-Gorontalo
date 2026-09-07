@@ -1,7 +1,15 @@
 import { Head, Link, router } from "@inertiajs/react";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import Layout from "@/components/Admin/Layout";
-import { ArrowLeft, Save, Image, Landmark } from "lucide-react";
+import {
+    ArrowLeft,
+    Save,
+    Image,
+    Landmark,
+    Link as LinkIcon,
+    Upload,
+    X,
+} from "lucide-react";
 
 const SUBTITLE_OPTIONS = [
     "Tari Tradisional",
@@ -22,12 +30,42 @@ export default function BudayaCreate() {
         image: "",
     });
 
+    const [imageMode, setImageMode] = useState("url");
+    const [imageFile, setImageFile] = useState(null);
+    const [imagePreview, setImagePreview] = useState(null);
+    const fileInputRef = useRef(null);
+
     const update = (field, value) => setForm((prev) => ({ ...prev, [field]: value }));
+
+    const handleFileSelect = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            setImageFile(file);
+            setImagePreview(URL.createObjectURL(file));
+            setForm((prev) => ({ ...prev, image: "" }));
+        }
+    };
+
+    const removeFile = () => {
+        setImageFile(null);
+        setImagePreview(null);
+        if (fileInputRef.current) fileInputRef.current.value = "";
+    };
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        alert("Budaya berhasil ditambahkan (dummy)!");
-        router.visit("/admin/budaya");
+        if (imageFile) {
+            const formData = new FormData();
+            Object.entries(form).forEach(([key, value]) => {
+                if (value !== "" && value !== null && value !== undefined) {
+                    formData.append(key, value);
+                }
+            });
+            formData.append("image_file", imageFile);
+            router.post("/admin/budaya", formData, { forceFormData: true });
+        } else {
+            router.post("/admin/budaya", form);
+        }
     };
 
     return (
@@ -119,28 +157,58 @@ export default function BudayaCreate() {
                                 <div className="w-8 h-8 rounded-lg bg-goro-gold/10 flex items-center justify-center">
                                     <Image className="w-4 h-4 text-goro-gold" />
                                 </div>
-                                <h2 className="text-sm font-semibold text-primary-dark">
-                                    Gambar
-                                </h2>
+                                <h2 className="text-sm font-semibold text-primary-dark">Gambar</h2>
                             </div>
-                            <input
-                                type="url"
-                                value={form.image}
-                                onChange={(e) => update("image", e.target.value)}
-                                placeholder="https://example.com/image.jpg"
-                                className="w-full border border-sand rounded-xl px-4 py-3 text-sm text-primary-dark placeholder:text-forest-muted/40 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40 transition-all mb-4"
-                            />
-                            {form.image ? (
-                                <img
-                                    src={form.image}
-                                    alt="Preview"
-                                    className="w-full h-48 rounded-xl object-cover border border-sand"
-                                />
+
+                            <div className="flex gap-2 mb-4">
+                                <button type="button" onClick={() => { setImageMode("url"); removeFile(); }} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${imageMode === "url" ? "bg-primary text-white" : "bg-cream text-forest-muted hover:bg-sand"}`}>
+                                    <LinkIcon className="w-3 h-3" /> URL
+                                </button>
+                                <button type="button" onClick={() => { setImageMode("file"); update("image", ""); }} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${imageMode === "file" ? "bg-primary text-white" : "bg-cream text-forest-muted hover:bg-sand"}`}>
+                                    <Upload className="w-3 h-3" /> Upload File
+                                </button>
+                            </div>
+
+                            {imageMode === "url" ? (
+                                <>
+                                    <input
+                                        type="url"
+                                        value={form.image}
+                                        onChange={(e) => update("image", e.target.value)}
+                                        placeholder="https://example.com/image.jpg"
+                                        className="w-full border border-sand rounded-xl px-4 py-3 text-sm text-primary-dark placeholder:text-forest-muted/40 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40 transition-all mb-4"
+                                    />
+                                    {form.image ? (
+                                        <img src={form.image} alt="Preview" className="w-full h-48 rounded-xl object-cover border border-sand" />
+                                    ) : (
+                                        <div className="w-full h-48 rounded-xl border-2 border-dashed border-sand flex flex-col items-center justify-center text-forest-muted/40">
+                                            <Image className="w-8 h-8 mb-2" />
+                                            <span className="text-xs">Preview gambar</span>
+                                        </div>
+                                    )}
+                                </>
                             ) : (
-                                <div className="w-full h-48 rounded-xl border-2 border-dashed border-sand flex flex-col items-center justify-center text-forest-muted/40">
-                                    <Image className="w-8 h-8 mb-2" />
-                                    <span className="text-xs">Preview gambar</span>
-                                </div>
+                                <>
+                                    <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileSelect} className="hidden" id="budaya-image-upload" />
+                                    {imageFile ? (
+                                        <div className="relative w-full h-48 rounded-xl overflow-hidden border border-sand group">
+                                            <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
+                                            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-3">
+                                                <p className="text-xs text-white font-medium truncate">{imageFile.name}</p>
+                                                <p className="text-[0.6rem] text-white/70">{(imageFile.size / 1024).toFixed(1)} KB</p>
+                                            </div>
+                                            <button type="button" onClick={removeFile} className="absolute top-2 right-2 w-7 h-7 rounded-full bg-red-500/80 flex items-center justify-center text-white hover:bg-red-500 transition-colors">
+                                                <X className="w-3.5 h-3.5" />
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <label htmlFor="budaya-image-upload" className="flex flex-col items-center justify-center w-full h-48 rounded-xl border-2 border-dashed border-sand hover:border-primary/40 cursor-pointer transition-colors">
+                                            <Upload className="w-8 h-8 text-forest-muted/40 mb-2" />
+                                            <span className="text-xs text-forest-muted/60">Klik untuk pilih gambar</span>
+                                            <span className="text-[0.6rem] text-forest-muted/40 mt-1">JPG, PNG, max 2MB</span>
+                                        </label>
+                                    )}
+                                </>
                             )}
                         </div>
                     </div>
