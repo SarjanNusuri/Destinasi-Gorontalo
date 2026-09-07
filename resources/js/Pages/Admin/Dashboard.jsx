@@ -1,22 +1,26 @@
-import { Head, Link } from "@inertiajs/react";
+import { Head, Link, usePage } from "@inertiajs/react";
 import Layout from "@/components/Admin/Layout";
-import { MapPin, BedDouble, Star, Globe } from "lucide-react";
+import { MapPin, BedDouble, Star, Globe, ArrowRight } from "lucide-react";
 
-const stats = [
-    { label: "Total Destinasi", value: "4", icon: MapPin, color: "text-goro-gold" },
-    { label: "Total Hotel", value: "12", icon: BedDouble, color: "text-green-400" },
-    { label: "Rata-rata Rating", value: "4.6", icon: Star, color: "text-yellow-400" },
-    { label: "Kategori", value: "6", icon: Globe, color: "text-blue-400" },
-];
-
-const recentDestinations = [
-    { id: 1, name: "Danau Limboto", tag: "ALAM", status: "Aktif" },
-    { id: 2, name: "Pantai Olele", tag: "PANTAI", status: "Aktif" },
-    { id: 3, name: "Benteng Otanaha", tag: "SEJARAH", status: "Aktif" },
-    { id: 4, name: "Air Terjun Tapadaa", tag: "PETUALANGAN", status: "Aktif" },
-];
+const CATEGORY_LABELS = {
+    nature: "Alam",
+    beach: "Pantai",
+    history: "Sejarah",
+    adventure: "Petualangan",
+    culture: "Budaya",
+    culinary: "Kuliner",
+};
 
 export default function Dashboard() {
+    const { stats, recentDestinations, categories } = usePage().props;
+
+    const statCards = [
+        { label: "Total Destinasi", value: stats.destinations, icon: MapPin, color: "text-goro-gold", href: "/admin/destinations" },
+        { label: "Total Penginapan", value: stats.hotels, icon: BedDouble, color: "text-green-400", href: "/admin/destinations" },
+        { label: "Rata-rata Rating", value: stats.avg_rating, icon: Star, color: "text-yellow-400", href: "/admin/destinations" },
+        { label: "Kategori", value: stats.categories, icon: Globe, color: "text-blue-400", href: "/admin/destinations" },
+    ];
+
     return (
         <Layout>
             <Head title="Dashboard — Admin GO360" />
@@ -32,87 +36,90 @@ export default function Dashboard() {
 
             {/* Stats */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-                {stats.map((stat) => {
+                {statCards.map((stat) => {
                     const Icon = stat.icon;
                     return (
-                        <div
+                        <Link
                             key={stat.label}
-                            className="rounded-2xl border border-sand bg-white p-5 shadow-sm"
+                            href={stat.href}
+                            className="rounded-2xl border border-sand bg-white p-5 shadow-sm hover:shadow-md transition-shadow group"
                         >
                             <div className="flex items-center justify-between mb-3">
-                                <span className="text-xs text-forest-muted">
-                                    {stat.label}
-                                </span>
-                                <Icon className={`w-4 h-4 ${stat.color}`} />
+                                <span className="text-xs text-forest-muted font-medium">{stat.label}</span>
+                                <div className="w-8 h-8 rounded-lg bg-cream flex items-center justify-center group-hover:scale-110 transition-transform">
+                                    <Icon className={`w-4 h-4 ${stat.color}`} />
+                                </div>
                             </div>
-                            <p className="text-2xl font-display font-light text-primary-dark">
-                                {stat.value}
-                            </p>
-                        </div>
+                            <p className="text-2xl font-display font-light text-primary-dark">{stat.value}</p>
+                        </Link>
                     );
                 })}
             </div>
 
-            {/* Quick actions */}
-            <div className="mb-8">
-                <h2 className="text-sm font-semibold text-primary-dark mb-4">
-                    Aksi Cepat
-                </h2>
-                <div className="flex gap-3">
-                    <Link
-                        href="/admin/destinations/create"
-                        className="inline-flex items-center gap-2 bg-primary text-white px-5 py-2.5 rounded-xl text-sm font-medium hover:bg-primary-light transition-colors"
-                    >
-                        + Tambah Destinasi
-                    </Link>
-                    <Link
-                        href="/admin/destinations"
-                        className="inline-flex items-center gap-2 border border-sand bg-white px-5 py-2.5 rounded-xl text-sm font-medium text-primary-dark hover:bg-cream transition-colors"
-                    >
-                        Lihat Semua Destinasi
-                    </Link>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* Recent Destinations */}
+                <div className="lg:col-span-2 rounded-2xl border border-sand bg-white shadow-sm overflow-hidden">
+                    <div className="flex items-center justify-between px-6 py-4 border-b border-sand">
+                        <h2 className="text-sm font-semibold text-primary-dark">Destinasi Terbaru</h2>
+                        <Link href="/admin/destinations" className="text-xs text-primary hover:text-primary-light transition-colors flex items-center gap-1">
+                            Lihat Semua <ArrowRight className="w-3 h-3" />
+                        </Link>
+                    </div>
+                    <div className="divide-y divide-sand">
+                        {recentDestinations.map((dest) => (
+                            <Link
+                                key={dest.id}
+                                href={`/admin/destinations/${dest.id}/edit`}
+                                className="flex items-center justify-between px-6 py-3.5 hover:bg-cream/30 transition-colors"
+                            >
+                                <div>
+                                    <p className="text-sm font-medium text-primary-dark">{dest.name}</p>
+                                    <span className="font-mono text-[0.55rem] tracking-wider text-goro-gold uppercase">{dest.tag}</span>
+                                </div>
+                                <div className="flex items-center gap-4 text-xs text-forest-muted">
+                                    <span className="flex items-center gap-1">
+                                        <Star className="w-3 h-3 text-goro-gold" />
+                                        {dest.rating}
+                                    </span>
+                                    <span>{dest.hotels_count} hotel</span>
+                                </div>
+                            </Link>
+                        ))}
+                    </div>
+                </div>
+
+                {/* Categories */}
+                <div className="rounded-2xl border border-sand bg-white shadow-sm overflow-hidden">
+                    <div className="px-6 py-4 border-b border-sand">
+                        <h2 className="text-sm font-semibold text-primary-dark">Kategori</h2>
+                    </div>
+                    <div className="divide-y divide-sand">
+                        {Object.entries(categories).map(([key, count]) => (
+                            <div key={key} className="flex items-center justify-between px-6 py-3.5">
+                                <span className="text-sm text-primary-dark">{CATEGORY_LABELS[key] || key}</span>
+                                <span className="text-xs text-forest-muted bg-cream rounded-full px-2.5 py-0.5">{count}</span>
+                            </div>
+                        ))}
+                    </div>
                 </div>
             </div>
 
-            {/* Recent destinations */}
-            <div className="rounded-2xl border border-sand bg-white shadow-sm overflow-hidden">
-                <div className="px-5 py-4 border-b border-sand">
-                    <h2 className="text-sm font-semibold text-primary-dark">
-                        Destinasi Terbaru
-                    </h2>
-                </div>
-                <div className="divide-y divide-sand">
-                    {recentDestinations.map((dest) => (
-                        <div
-                            key={dest.id}
-                            className="flex items-center justify-between px-5 py-3 hover:bg-cream/50 transition-colors"
-                        >
-                            <div className="flex items-center gap-3">
-                                <div className="w-8 h-8 rounded-lg bg-goro-gold/10 border border-goro-gold/20 flex items-center justify-center">
-                                    <MapPin className="w-4 h-4 text-goro-gold" />
-                                </div>
-                                <div>
-                                    <p className="text-sm font-medium text-primary-dark">
-                                        {dest.name}
-                                    </p>
-                                    <span className="font-mono text-[0.55rem] tracking-wider text-goro-gold uppercase">
-                                        {dest.tag}
-                                    </span>
-                                </div>
-                            </div>
-                            <div className="flex items-center gap-3">
-                                <span className="text-xs text-green-600 bg-green-50 px-2 py-0.5 rounded-full">
-                                    {dest.status}
-                                </span>
-                                <Link
-                                    href={`/admin/destinations/${dest.id}/edit`}
-                                    className="text-xs text-primary hover:text-primary-light transition-colors"
-                                >
-                                    Edit
-                                </Link>
-                            </div>
-                        </div>
-                    ))}
+            {/* Quick Actions */}
+            <div className="mt-6 rounded-2xl border border-sand bg-white shadow-sm p-6">
+                <h2 className="text-sm font-semibold text-primary-dark mb-4">Akses Cepat</h2>
+                <div className="flex flex-wrap gap-3">
+                    <Link
+                        href="/admin/destinations/create"
+                        className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-primary text-white text-sm font-medium hover:bg-primary-light transition-colors"
+                    >
+                        <MapPin className="w-4 h-4" /> Tambah Destinasi
+                    </Link>
+                    <Link
+                        href="/"
+                        className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-sand text-sm text-primary-dark hover:bg-cream transition-colors"
+                    >
+                        <Globe className="w-4 h-4" /> Lihat Website
+                    </Link>
                 </div>
             </div>
         </Layout>

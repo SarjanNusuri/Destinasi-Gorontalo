@@ -1,8 +1,7 @@
 import { useEffect, useRef } from "react";
-import { Link } from "@inertiajs/react";
+import { Link, usePage } from "@inertiajs/react";
 import { MapPin, Navigation, Search, Compass } from "lucide-react";
 import { useInView } from "@/hooks/useLanding";
-import { destinations } from "@/data/landing";
 
 const features = [
     { icon: MapPin, label: "Marker per kategori wisata" },
@@ -15,6 +14,7 @@ const features = [
 const GORONTALO_CENTER = [0.5435442, 123.0567693];
 
 export default function MapSection() {
+    const { allDestinations } = usePage().props;
     const [ref, isInView] = useInView();
 
     const mapRef = useRef(null);
@@ -122,7 +122,7 @@ export default function MapSection() {
              * DESTINATION MARKERS
              * ==========================================
              */
-            destinations.forEach((dest) => {
+            allDestinations.forEach((dest) => {
                 const destinationMarker = L.marker([dest.lat, dest.lng], {
                     icon: goldIcon,
                 }).addTo(map);
@@ -187,9 +187,10 @@ export default function MapSection() {
                                 style="
                                     font-family:Manrope,sans-serif;
                                     padding:4px;
-                                    min-width:140px;
+                                    min-width:160px;
                                 "
                             >
+                                ${hotel.image ? `<img src="${hotel.image}" style="width:100%;height:60px;object-fit:cover;border-radius:6px;margin-bottom:6px;" />` : ''}
                                 <strong
                                     style="
                                         color:#d4a853;
@@ -207,7 +208,7 @@ export default function MapSection() {
                                         font-size:10px;
                                     "
                                 >
-                                    ${hotel.type} · ${hotel.price}
+                                    ${hotel.type} · ${hotel.price || ''}
                                 </span>
                             </div>
                         `);
@@ -249,7 +250,7 @@ export default function MapSection() {
      * HOTEL COUNT
      * ==========================================
      */
-    const hotelCount = destinations.reduce(
+    const hotelCount = allDestinations.reduce(
         (total, destination) =>
             total +
             (Array.isArray(destination.hotels) ? destination.hotels.length : 0),
@@ -494,7 +495,7 @@ export default function MapSection() {
                                     uppercase
                                 "
                             >
-                                {destinations.length} Destinasi · {hotelCount}{" "}
+                                {allDestinations.length} Destinasi · {hotelCount}{" "}
                                 Hotel
                             </span>
                         </div>

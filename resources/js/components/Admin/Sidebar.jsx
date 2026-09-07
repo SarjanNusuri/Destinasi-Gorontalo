@@ -9,6 +9,7 @@ import {
     MapPin,
     Landmark,
     Globe,
+    BedDouble,
 } from "lucide-react";
 import { Link, usePage } from "@inertiajs/react";
 
@@ -25,6 +26,7 @@ export default function Sidebar({
     const navItems = [
         { label: "Dashboard", icon: LayoutDashboard, href: "/admin" },
         { label: "Destinasi", icon: MapPin, href: "/admin/destinations" },
+        { label: "Hotel", icon: BedDouble, href: "/admin/hotels" },
         { label: "Budaya", icon: Landmark, href: "/admin/budaya" },
     ];
 
